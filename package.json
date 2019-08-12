@@ -1,0 +1,8 @@
+{
+    "scripts": {
+      "check": "tsc -c jsconfig.json"
+    },
+  "devDependencies": {
+    "typescript": "^3.5.3"
+  }
+}

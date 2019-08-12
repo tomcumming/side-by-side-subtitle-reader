@@ -1,0 +1,23 @@
+body {
+    --background-color: #000;
+    --dark-bg: #222;
+    --light-bg: #555;
+    --text-color: #eee;
+
+    background-color: var(--background-color);
+    color: var(--text-color);
+
+    font-family: sans-serif;
+}
+
+table {
+    width: 100%;
+}
+
+table thead th {
+    background-color: var(--light-bg);
+}
+
+table tbody td {
+    background-color: var(--dark-bg);
+}

@@ -1,0 +1,11 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "checkJs": true,
+        "noEmit": true,
+        "target": "esnext"
+    },
+    "files": [
+        "./script.js"
+    ]
+}
