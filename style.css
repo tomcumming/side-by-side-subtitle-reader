@@ -12,6 +12,7 @@ body {
 
 table {
     width: 100%;
+    white-space: pre-line;
 }
 
 table thead th {

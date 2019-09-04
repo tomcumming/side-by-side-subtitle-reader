@@ -1,5 +1,5 @@
-/** @typedef {{ time: number, caption: string }} Entry */
-/** @typedef {{ column: number, time: number, caption: string }} ColEntry */
+/** @typedef {{ startTime: number, endTime: number, caption: string }} Entry */
+/** @typedef {{ column: number, entry: Entry }} ColEntry */
 /** @typedef {{ time: number, captions: string[] }} EntryRow */
 
 /** @type {{ name: string, entries: Entry[] }[]} */
@@ -26,9 +26,27 @@ function prettyTime(time) {
  */
 function entriesByTime() {
     const allEntries = columns
-        .flatMap((col, idx) => col.entries.map(e => ({ column: idx, time: e.time, caption: e.caption })));
-    allEntries.sort((a, b) => a.time - b.time);
+        .flatMap((col, idx) => col.entries.map(entry => ({ column: idx, entry })));
+    allEntries.sort((a, b) => a.entry.startTime - b.entry.startTime);
     return allEntries;
+}
+
+/**
+ * @param {Map<number, Entry>} current
+ * @returns {EntryRow}
+ */
+function makeEntryRow(current) {
+    let captions = [];
+    for(let idx = 0; idx < columns.length; idx += 1) {
+        const entry = current.get(idx);
+        captions.push(entry === undefined ? '' : entry.caption);
+    }
+
+    return {
+        time: Array.from(current.values())
+            .reduce((p, c) => Math.min(p, c.startTime), Number.MAX_VALUE),
+        captions
+    };
 }
 
 /**
@@ -37,32 +55,26 @@ function entriesByTime() {
  * @returns {IterableIterator<EntryRow>}
  */
 function* syncronizedEntries(orderedEntries) {
-    /** @type {undefined | number} */
-    let firstTime;
-    /** @type {{ [idx: number]: string }} */
-    let current = {};
+    /** @type Map<number, Entry> */
+    let current = new Map();
 
     for(const entry of orderedEntries) {
-        if(current[entry.column] !== undefined) {
-            yield {
-                time: firstTime === undefined ? 0 : firstTime,
-                captions: columns.map((_, idx) => current[idx] === undefined ? '' : current[idx])
-            };
-            firstTime = entry.time;
-            current = { [entry.column]: entry.caption };
-        } else {
-            current[entry.column] = entry.caption;
-            if(firstTime === undefined)
-                firstTime = entry.time;
+        if(current.size > 0) {
+            const maxTime = Array.from(current.values())
+                .reduce((p, c) => Math.min(p, c.endTime), Number.MAX_VALUE);
+
+            if(current.has(entry.column) || entry.entry.startTime > maxTime) {
+                yield makeEntryRow(current);
+                current = new Map();
+            }
         }
+
+        current.set(entry.column, entry.entry);
+
     }
 
-    if(Object.keys(current).length > 0) {
-        yield {
-            time: firstTime === undefined ? 0 : firstTime,
-            captions: columns.map((_, idx) => current[idx] === undefined ? '' : current[idx])
-        };
-    }
+    if(current.size > 0)
+        yield makeEntryRow(current);
 }
 
 function renderColumns() {
@@ -132,7 +144,8 @@ function parseEntry(lines) {
     }
 
     /** @type {number} */
-    let time;
+    let startTime;
+    let endTime;
     {
         const line = lines.next();
         if(line.done) {
@@ -145,10 +158,15 @@ function parseEntry(lines) {
             return undefined;
         }
 
-        time = parseInt(match[4])
+        startTime = parseInt(match[4])
             + parseInt(match[3]) * 1000
             + parseInt(match[2]) * 1000 * 60
             + parseInt(match[1]) * 1000 * 60 * 60;
+
+        endTime = parseInt(match[8])
+            + parseInt(match[7]) * 1000
+            + parseInt(match[6]) * 1000 * 60
+            + parseInt(match[5]) * 1000 * 60 * 60;
     }
 
     /** @type {string[]} */
@@ -156,7 +174,7 @@ function parseEntry(lines) {
     while(true) {
         const line = lines.next();
         if(line.done || line.value.trim() === '') {
-            return { time, caption: captions.join('\n') };
+            return { startTime, endTime, caption: captions.join('\n') };
         } else {
             captions = captions.concat(line.value);
         }
