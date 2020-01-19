@@ -173,7 +173,7 @@ function parseEntry(lines) {
     let captions = [];
     while(true) {
         const line = lines.next();
-        if(line.done || line.value.trim() === '') {
+        if(line.done || line.value === '') {
             return { startTime, endTime, caption: captions.join('\n') };
         } else {
             captions = captions.concat(line.value);
@@ -201,7 +201,7 @@ function* parseEntries(lines) {
  * @argument {string} content */
 function addColumn(name, content) {
     // parse entries
-    const lines = content.split('\n');
+    const lines = content.split('\n').map(line => line.trim());
     const entries = Array.from(parseEntries(lines[Symbol.iterator]()));
     columns = columns.concat([{ name, entries }]);
     renderColumns();
