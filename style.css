@@ -22,3 +22,7 @@ table thead th {
 table tbody td {
     background-color: var(--dark-bg);
 }
+
+table > tbody > tr > td:hover {
+    color: var(--text-color) !important;
+}

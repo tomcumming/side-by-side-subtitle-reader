@@ -77,27 +77,52 @@ function* syncronizedEntries(orderedEntries) {
         yield makeEntryRow(current);
 }
 
+function renderTitles() {
+    const tr = document.createElement('tr');
+
+    const th = document.createElement('th');
+    th.textContent = 'Time';
+    tr.appendChild(th);
+
+    for(const column of columns) {
+        const th = document.createElement('th');
+        th.textContent = column.name;
+        tr.appendChild(th);
+    }
+
+    return tr;
+}
+
+function renderSettings() {
+    const tr = document.createElement('tr');
+
+    tr.appendChild(document.createElement('th'));
+
+    for(const _columnIdx in columns) {
+        const th = document.createElement('th');
+
+        const label = document.createElement('label');
+        label.textContent = 'Hide until hover';
+
+        const radio = document.createElement('input');
+        radio.type = 'checkbox';
+        label.appendChild(radio);
+
+        th.appendChild(label);
+        tr.appendChild(th);
+    }
+
+    return tr;
+}
+
 function renderColumns() {
     const header = document.querySelector('thead');
     if(header instanceof HTMLTableSectionElement) {
         while(header.firstChild)
             header.firstChild.remove();
 
-        const tr = document.createElement('tr');
-
-        {
-            const th = document.createElement('th');
-            th.textContent = 'Time';
-            tr.appendChild(th);
-        }
-
-        for(const column of columns) {
-            const th = document.createElement('th');
-            th.textContent = column.name;
-            tr.appendChild(th);
-        }
-
-        header.appendChild(tr);
+        header.appendChild(renderTitles());
+        header.appendChild(renderSettings());
     }
 
     const rows = syncronizedEntries(entriesByTime()[Symbol.iterator]());
@@ -205,6 +230,8 @@ function addColumn(name, content) {
     const entries = Array.from(parseEntries(lines[Symbol.iterator]()));
     columns = columns.concat([{ name, entries }]);
     renderColumns();
+
+    updateStyles();
 }
 
 /** @argument {HTMLInputElement} inputElement */
@@ -226,10 +253,32 @@ function setupInputElement(inputElement) {
     });
 }
 
+function updateStyles() {
+    const styles = document.querySelector('#custom-styles');
+    if (styles instanceof HTMLStyleElement) {
+        styles.textContent = '';
+
+        const radios = Array.from(document.querySelectorAll('input[type="checkbox"]'));
+        for (const radioIdx in radios) {
+            const radio = radios[radioIdx];
+            if (radio instanceof HTMLInputElement && radio.checked) {
+                styles.textContent += `
+table > tbody > tr > td:nth-child(${parseInt(radioIdx) + 2}) {
+    color: var(--background-color);
+}`;
+            }
+        }
+    }
+
+    console.log('update styles');
+}
+
 function init() {
     const inputElement = document.querySelector('#file-adder');
     if (inputElement instanceof HTMLInputElement)
         setupInputElement(inputElement);
+
+    document.body.addEventListener('change', updateStyles);
 }
 
 if (document.readyState === 'complete')
