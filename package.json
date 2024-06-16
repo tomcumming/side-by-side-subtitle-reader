@@ -1,8 +1,10 @@
 {
-    "scripts": {
-      "check": "tsc -p jsconfig.json"
-    },
   "devDependencies": {
-    "typescript": "^3.5.3"
+    "typescript": "^5.4.5",
+    "typescript-language-server": "^4.3.3"
+  },
+  "scripts": {
+    "serve": "esbuild --servedir=.",
+    "check": "tsc -p jsconfig.json"
   }
 }
