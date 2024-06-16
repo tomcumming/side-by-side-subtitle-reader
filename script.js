@@ -133,13 +133,15 @@ function renderColumns() {
  * @returns {undefined | Entry}
  */
 function parseEntry(lines) {
+    // Skip headers etc
     {
-        const line = lines.next();
-        if(line.done)
-            return undefined;
-        if(!/^\d+$/.test(line.value)) {
-            console.warn(`Could not read entry number in '${line}'`);
-            return undefined;
+        let line = lines.next();
+        while(true) {
+            if(line.done)
+                return undefined;
+            if(/^\d+$/.test(line.value))
+                break;
+            line = lines.next();
         }
     }
 
@@ -152,9 +154,9 @@ function parseEntry(lines) {
             console.warn(`Unexpected EOF when parsing time`);
             return undefined;
         }
-        const match = /^(\d\d):(\d\d):(\d\d),(\d+)\s-->\s(\d\d):(\d\d):(\d\d),(\d+)$/.exec(line.value)
+        const match = /^(\d\d):(\d\d):(\d\d)[.,](\d+)\s-->\s(\d\d):(\d\d):(\d\d)[.,](\d+)$/.exec(line.value)
         if(match === null) {
-            console.warn(`Invalid time format: '${line}'`);
+            console.warn(`Invalid time format: '${line.value}'`);
             return undefined;
         }
 
