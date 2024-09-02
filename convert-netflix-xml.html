@@ -39,6 +39,15 @@ function convertTime(text) {
     return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(millis, 3)}`;
 }
 
+function childText(node) {
+    if(node.nodeType === document.TEXT_NODE)
+        return [node.data];
+    else if(node.nodeType === document.ELEMENT_NODE)
+        return Array.from(node.childNodes).flatMap(childText)
+    else
+        return [];
+}
+
 function onSubmit(e) {
     e.preventDefault(); 
 
@@ -55,7 +64,10 @@ function onSubmit(e) {
             const begin = convertTime(p.getAttribute('begin'));
             const end = convertTime(p.getAttribute('end'));
             const spans = Array.from(p.querySelectorAll('span'));
-            const text = spans.map(span => span.childNodes[0].data).join(' - ');
+            const text = childText(p)
+                .map(s => s.trim())
+                .filter(s => s !== '')
+                .join(' - ')
             return `${idx + 1}\n${begin} --> ${end}\n${text}\n`;
         })
         .join('\n');
