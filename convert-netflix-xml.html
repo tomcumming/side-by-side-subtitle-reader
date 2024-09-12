@@ -18,6 +18,10 @@ form > textarea {
 <body>
     <form>
         <textarea></textarea>
+        <fieldset>
+            <input type="radio" value="netflix" name="format" checked/><label for="netflix">Netflix</label>
+            <input type="radio" value="iqiyi" name="format"/><label for="iqiyi">Iqiyi</label>
+        </fieldset>
         <input type="submit" value="Convert" />
     </form>
     <h4>Converted Text:</h4>
@@ -30,8 +34,12 @@ function pad(n, ds = 2) {
     return zs.concat(s).substr(0, ds);
 }
 
-function convertTime(text) {
+function convertNetflixTime(text) {
     const s = parseInt(text.substr(0, text.length - 1)) / 10_000_000;
+    return convertTime(s);
+}
+
+function convertTime(s) {
     const millis = Math.floor( (s % 1) * 1000);
     const seconds = Math.floor(s % 60);
     const minutes = Math.floor(s % (60 * 60) / 60);
@@ -42,35 +50,61 @@ function convertTime(text) {
 function childText(node) {
     if(node.nodeType === document.TEXT_NODE)
         return [node.data];
+    else if(node.nodeType === document.CDATA_SECTION_NODE)
+        return [node.data];
     else if(node.nodeType === document.ELEMENT_NODE)
         return Array.from(node.childNodes).flatMap(childText)
     else
         return [];
 }
 
-function onSubmit(e) {
-    e.preventDefault(); 
+function formattedChildText(node) {
+    return childText(node)
+        .map(s => s.trim())
+        .filter(s => s !== '')
+        .join(' - ');
+}
 
+function parseNetflix(parsed) {
+    const ps = parsed.querySelectorAll('tt > body > div > p');
+
+    return Array.from(ps)
+        .map((p, idx) => {
+            const begin = convertNetflixTime(p.getAttribute('begin'));
+            const end = convertNetflixTime(p.getAttribute('end'));
+            const text = formattedChildText(p);
+            return `${idx + 1}\n${begin} --> ${end}\n${text}\n`;
+        })
+        .join('\n');
+}
+
+function parseIqiyi(parsed) {
+    const es = parsed.querySelectorAll('xml > dia');
+
+    return Array.from(es)
+        .map((e, idx) => {
+            const text = formattedChildText(e.querySelector('sub'));
+            const begin = convertTime(parseInt(e.querySelector('st').textContent) / 1_000);
+            const end = convertTime(parseInt(e.querySelector('et').textContent) / 1_000);
+            return `${idx + 1}\n${begin} --> ${end}\n${text}\n`;
+        })
+        .join('\n');
+}
+
+function onSubmit(e) {
+    e.preventDefault();
+
+    const format = new FormData(document.querySelector('form')).get('format');
     const textArea = document.querySelector('textarea');
     const pre = document.querySelector('pre');
 
     const parser = new DOMParser();
     const parsed = parser.parseFromString(textArea.value, 'text/xml');
 
-    const ps = parsed.querySelectorAll('tt > body > div > p');
-
-    const srtText = Array.from(ps)
-        .map((p, idx) => {
-            const begin = convertTime(p.getAttribute('begin'));
-            const end = convertTime(p.getAttribute('end'));
-            const spans = Array.from(p.querySelectorAll('span'));
-            const text = childText(p)
-                .map(s => s.trim())
-                .filter(s => s !== '')
-                .join(' - ')
-            return `${idx + 1}\n${begin} --> ${end}\n${text}\n`;
-        })
-        .join('\n');
+    let srtText;
+    if (format === 'netflix') srtText = parseNetflix(parsed);
+    else if(format === 'iqiyi') srtText = parseIqiyi(parsed);
+    else throw new Error(`Unknown format: '${format}'`);
 
     pre.innerText = srtText;
 
