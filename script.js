@@ -92,13 +92,19 @@ function renderColumns() {
         }
 
         for(const column of columns) {
-            const span = document.createElement('span');
-            span.innerText = column.name;
+            {
+                const span = document.createElement('span');
+                span.innerText = column.name;
 
-            const th = document.createElement('th');
-            th.appendChild(span);
+                const th = document.createElement('th');
+                th.appendChild(span);
 
-            tr.appendChild(th);
+                tr.appendChild(th);
+            }
+            {
+                const th = document.createElement('th');
+                tr.appendChild(th);
+            }
         }
 
         header.appendChild(tr);
@@ -121,9 +127,21 @@ function renderColumns() {
             }
 
             for(const caption of row.captions) {
-                const td = document.createElement('td');
-                td.textContent = caption;
-                tr.appendChild(td);
+                {
+                    const td = document.createElement('td');
+                    td.textContent = caption;
+                    tr.appendChild(td);
+                }
+                {
+                    const button = document.createElement('button');
+                    button.classList.add('play-tts');
+                    button.textContent = '▶️';
+                    
+                    const td = document.createElement('td');
+                    td.appendChild(button);
+                    
+                    tr.appendChild(td);
+                }
             }
 
             body.appendChild(tr);
@@ -232,10 +250,28 @@ function setupInputElement(inputElement) {
     });
 }
 
+/** @argument {HTMLTableElement} table */
+function setupPlayButtons(table) {
+    table.addEventListener('click', event => {
+        if(!(event.target instanceof HTMLButtonElement)) return;
+        const prev = event.target.parentElement?.previousSibling;
+        if(!(prev instanceof HTMLElement)) return;
+        const textToSpeak = prev.textContent;
+
+        const ut = new SpeechSynthesisUtterance(textToSpeak);
+        ut.lang = 'zh'; // Have to hard code for now...
+        ut.rate = 0.5;
+        self.speechSynthesis.speak(ut);
+    });
+}
+
 function init() {
     const inputElement = document.querySelector('#file-adder');
     if (inputElement instanceof HTMLInputElement)
         setupInputElement(inputElement);
+
+    const table = document.querySelector('table');
+    if (table) setupPlayButtons(table);
 }
 
 if (document.readyState === 'complete')

@@ -23,6 +23,9 @@ table tbody td {
     background-color: var(--dark-bg);
 }
 
-tbody > tr > td:hover {
-    opacity: 1;
+button.play-tts {
+    background: none;
+    border: 0;
+    padding: 0;
+    margin: 0;
 }
