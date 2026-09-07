@@ -2,42 +2,6 @@
 /** @typedef {{ column: number, entry: Entry }} ColEntry */
 /** @typedef {{ time: number, captions: string[] }} EntryRow */
 
-{
-    const styleSheet = document.styleSheets[0];
-    /** @type { undefined | number } */
-    let hideColumnRule = undefined;
-
-    function checkHiddenColumns() {
-        if(hideColumnRule !== undefined)
-            styleSheet.deleteRule(hideColumnRule);
-        hideColumnRule = undefined;
-
-        const checkedBoxes = Array.from(document.querySelectorAll('input[type=checkbox]'))
-            .filter(el => el instanceof HTMLInputElement && el.checked);
-
-        if(checkedBoxes.length > 0) {
-            const indexes = checkedBoxes.map(el => {
-                const th = el.parentElement;
-                if (th === null) throw new Error(`Expected parent th`);
-                const tr = th.parentElement;
-                if (tr === null) throw new Error(`Expected parent tr`);
-                return Array.from(tr.children).indexOf(th) + 1;
-            });
-            const selectors = indexes.map(idx => `tbody > tr > td:nth-child(${idx})`);
-            const selector = selectors.join(', ');
-            hideColumnRule = styleSheet.insertRule(
-                `${selector} { opacity: 0.1 }`
-            );
-        }
-    }
-
-    document.addEventListener('change', e => {
-        const elem = e.target;
-        if(elem instanceof HTMLInputElement && elem.type === 'checkbox')
-          checkHiddenColumns();
-    });
-}
-
 /** @type {{ name: string, entries: Entry[] }[]} */
 let columns = [];
 
@@ -131,12 +95,8 @@ function renderColumns() {
             const span = document.createElement('span');
             span.innerText = column.name;
 
-            const checkBox = document.createElement('input');
-            checkBox.type = 'checkbox';
-            
             const th = document.createElement('th');
             th.appendChild(span);
-            th.appendChild(checkBox);
 
             tr.appendChild(th);
         }
@@ -255,7 +215,7 @@ function addColumn(name, content) {
 
 /** @argument {HTMLInputElement} inputElement */
 function setupInputElement(inputElement) {
-    inputElement.addEventListener('change', e => {
+    inputElement.addEventListener('change', _e => {
         const file = inputElement.files !== null ? inputElement.files[0] : undefined;
         if (file !== undefined) {
             const fileReader = new FileReader();
