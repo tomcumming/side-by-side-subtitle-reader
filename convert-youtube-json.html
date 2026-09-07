@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: start;
+}
+
+form > textarea {
+    align-self: stretch;
+}
+    </style>
+</head>
+
+<body>
+    <form>
+        <textarea></textarea>
+        <input type="submit" value="Convert" />
+    </form>
+    <h4>Converted Text:</h4>
+    <pre></pre>
+
+    <script>
+function pad(n, ds = 2) {
+    const s = n.toFixed(0);
+    const zs = Array(ds - s.length).fill('0').join('');
+    return zs.concat(s).substr(0, ds);
+}
+
+function convertTime(s) {
+    const millis = Math.floor( (s % 1) * 1000);
+    const seconds = Math.floor(s % 60);
+    const minutes = Math.floor(s % (60 * 60) / 60);
+    const hours = Math.floor(s / 60 / 60);
+    return `${pad(hours)}:${pad(minutes)}:${pad(seconds)}.${pad(millis, 3)}`;
+}
+
+function parseYoutube(jsonStr) {
+    const json = JSON.parse(jsonStr);
+
+    return json.events.map((p, idx) => {
+        const begin = convertTime(p.tStartMs / 1000);
+        const end = convertTime((p.tStartMs + p.dDurationMs) / 1000);
+        const text = p.segs.map(s => s.utf8).join('\n');
+        return `${idx + 1}\n${begin} --> ${end}\n${text}\n`;
+    })
+    .join('\n');
+}
+
+function onSubmit(e) {
+    e.preventDefault();
+
+    const format = new FormData(document.querySelector('form')).get('format');
+    const textArea = document.querySelector('textarea');
+    const pre = document.querySelector('pre');
+
+    const srtText = parseYoutube(textArea.value);
+    pre.innerText = srtText;
+
+    navigator.clipboard.writeText(srtText);
+}
+
+document.addEventListener('submit', onSubmit);
+    </script>
+</body>
+
+</html>
