@@ -3,7 +3,7 @@
     "typescript": "7"
   },
   "scripts": {
-    "serve": "esbuild --servedir=.",
+    "serve": "esbuild --serve=0.0.0.0:8080 --servedir=.",
     "check": "tsc -p jsconfig.json"
   }
 }
